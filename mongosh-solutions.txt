@@ -1,0 +1,172 @@
+// ==============================================================================
+// MongoDB Shell (mongosh) Solutions - Assignment 7
+// Database: assignment7_db
+// ==============================================================================
+
+// 1. Create explicit collection with validation
+
+db.createCollection("books", {
+  validator: {
+    $jsonSchema: {
+      bsonType: "object",
+      required: ["title"],
+      properties: {
+        title: {
+          bsonType: "string",
+          minLength: 1,
+          description: "must be a non-empty string and is required"
+        }
+      }
+    }
+  }
+});
+
+// 2. Create implicit collection
+
+db.authors.insertOne({
+  name: "Author1",
+  nationality: "British"
+});
+
+// 3. Create capped collection
+
+db.createCollection("logs", {
+  capped: true,
+  size: 1048576
+});
+
+// 4. Create index
+
+db.books.createIndex({ title: 1 });
+
+// 5. Insert single document
+
+db.books.insertOne({
+  title: "Brave New World",
+  author: "Aldous Huxley",
+  year: 1932,
+  genres: ["Dystopian", "Science Fiction"]
+});
+
+// 6. Insert multiple documents
+
+db.books.insertMany([
+  {
+    title: "1984",
+    author: "George Orwell",
+    year: 1949,
+    genres: ["Dystopian", "Political Fiction"]
+  },
+  {
+    title: "To Kill a Mockingbird",
+    author: "Harper Lee",
+    year: 1960,
+    genres: ["Classic", "Drama"]
+  },
+  {
+    title: "Future",
+    author: "Unknown",
+    year: 2020,
+    genres: ["Science Fiction"]
+  },
+  {
+    title: "The Hobbit",
+    author: "J.R.R. Tolkien",
+    year: 1937,
+    genres: ["Fantasy", "Adventure"]
+  },
+  {
+    title: "Dune",
+    author: "Frank Herbert",
+    year: 2005,
+    genres: ["Science Fiction"]
+  },
+  {
+    title: "Dracula",
+    author: "Bram Stoker",
+    year: 1897,
+    genres: ["Horror", "Gothic"]
+  }
+]);
+
+
+// 8. Update book by title
+
+db.books.updateOne(
+  { title: "Future" },
+  { $set: { year: 2022 } }
+);
+
+// 9. Find book by title (query param)
+
+db.books.findOne({ title: "Brave New World" });
+
+// 10. Find books published within a range
+
+db.books.find({
+  year: { $gte: 1990, $lte: 2010 }
+});
+
+// 11. Find books by genre
+
+db.books.find({
+  genres: "Science Fiction"
+});
+
+// 12. Skip, limit, and sort
+
+db.books.find()
+  .sort({ year: -1 })
+  .skip(2)
+  .limit(3);
+
+// 13. Find by BSON type (Integer)
+
+db.books.find({
+  year: { $type: "int" }
+});
+
+// 14. Exclude genres
+
+db.books.find({
+  genres: { $nin: ["Horror", "Science Fiction"] }
+});
+
+// 15. Delete books before a year
+
+db.books.deleteMany({
+  year: { $lt: 2000 }
+});
+
+// 16. Aggregation: Filter and sort
+
+db.books.aggregate([
+  { $match: { year: { $gt: 2000 } } },
+  { $sort: { year: -1 } }
+]);
+
+// 17. Aggregation: Project fields
+
+db.books.aggregate([
+  { $match: { year: { $gt: 2000 } } },
+  { $project: { _id: 0, title: 1, author: 1, year: 1 } }
+]);
+
+// 18. Aggregation: Unwind array
+
+db.books.aggregate([
+  { $unwind: "$genres" }
+]);
+
+// 19. Aggregation: Lookup join
+
+db.books.aggregate([
+  {
+    $lookup: {
+      from: "logs",
+      localField: "_id",
+      foreignField: "bookId",
+      as: "logs"
+    }
+  }
+]);
